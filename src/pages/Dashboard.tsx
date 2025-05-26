@@ -28,6 +28,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showPlans, setShowPlans] = useState(false);
+
+  const handleCreateFirstLink = () => {
+    navigate('/dashboard/links/new');
+  };
 
   const premiumFeatures = [
     {
