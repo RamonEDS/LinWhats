@@ -15,24 +15,12 @@ export default function Dashboard() {
     }
   }, [user, loading, navigate]);
 
-  const handleUpgradeClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const pricingSection = document.getElementById('pricing');
-    if (pricingSection) {
-      pricingSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      navigate('/#pricing');
-    }
+  const handleUpgradeClick = () => {
+    navigate('/pricing');
   };
 
-  const handleCreateFirstLink = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const createSection = document.getElementById('create-form');
-    if (createSection) {
-      createSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      navigate('/#create-form');
-    }
+  const handleCreateFirstLink = () => {
+    navigate('/#create-form');
   };
 
   if (loading || !user) {
