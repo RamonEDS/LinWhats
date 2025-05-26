@@ -59,8 +59,9 @@ export const useProvideAuth = () => {
           email: session.user.email!,
           name: profile?.name || session.user.email!.split('@')[0],
           avatar: profile?.avatar_url || null,
-          isAdmin: false,
-          plan: 'free',
+          isAdmin: profile?.is_admin || false,
+          plan: profile?.plan || 'free',
+          settings: profile?.settings || {},
           createdAt: session.user.created_at,
         });
       } else {
@@ -80,8 +81,9 @@ export const useProvideAuth = () => {
           email: session.user.email!,
           name: profile?.name || session.user.email!.split('@')[0],
           avatar: profile?.avatar_url || null,
-          isAdmin: false,
-          plan: 'free',
+          isAdmin: profile?.is_admin || false,
+          plan: profile?.plan || 'free',
+          settings: profile?.settings || {},
           createdAt: session.user.created_at,
         });
       } else {
@@ -110,8 +112,9 @@ export const useProvideAuth = () => {
         email: data.user.email!,
         name: profile?.name || data.user.email!.split('@')[0],
         avatar: profile?.avatar_url || null,
-        isAdmin: false,
-        plan: 'free',
+        isAdmin: profile?.is_admin || false,
+        plan: profile?.plan || 'free',
+        settings: profile?.settings || {},
         createdAt: data.user.created_at,
       });
 
@@ -137,6 +140,9 @@ export const useProvideAuth = () => {
           .insert({
             user_id: data.user.id,
             name,
+            plan: 'free',
+            settings: {},
+            is_admin: false,
           });
 
         if (profileError) throw profileError;
@@ -148,6 +154,7 @@ export const useProvideAuth = () => {
           avatar: null,
           isAdmin: false,
           plan: 'free',
+          settings: {},
           createdAt: data.user.created_at,
         });
       }
@@ -170,7 +177,11 @@ export const useProvideAuth = () => {
       .from('profiles')
       .upsert({
         user_id: user.id,
-        ...data,
+        name: data.name,
+        avatar_url: data.avatar,
+        plan: data.plan,
+        settings: data.settings,
+        is_admin: data.isAdmin,
         updated_at: new Date().toISOString(),
       });
 

@@ -5,7 +5,15 @@ export type User = {
   avatar: string | null;
   isAdmin: boolean;
   plan: 'free' | 'pro';
+  settings: UserSettings;
   createdAt: string;
+};
+
+export type UserSettings = {
+  theme?: 'light' | 'dark';
+  language?: string;
+  notifications?: boolean;
+  [key: string]: any;
 };
 
 export type Link = {
