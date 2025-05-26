@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import DashboardLinks from './pages/DashboardLinks';
 import DashboardStats from './pages/DashboardStats';
 import Settings from './pages/Settings';
+import Upgrade from './pages/Upgrade';
 
 function App() {
   const auth = useProvideAuth();
@@ -24,6 +25,7 @@ function App() {
           <Route path="/dashboard/links" element={<DashboardLinks />} />
           <Route path="/dashboard/stats" element={<DashboardStats />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/upgrade" element={<Upgrade />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
