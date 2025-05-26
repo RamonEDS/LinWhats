@@ -116,7 +116,12 @@ export const useProvideAuth = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message === 'Invalid login credentials') {
+          return { error: new Error('Email ou senha incorretos') };
+        }
+        throw error;
+      }
 
       const profile = await fetchProfile(data.user.id);
       
@@ -136,7 +141,7 @@ export const useProvideAuth = () => {
       return { error: null };
     } catch (error) {
       console.error('Login error:', error);
-      return { error };
+      return { error: new Error('Erro ao fazer login. Tente novamente.') };
     } finally {
       setLoading(false);
     }
@@ -145,12 +150,35 @@ export const useProvideAuth = () => {
   const register = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
+
+      // Check if user already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        return { 
+          error: new Error('Este email já está cadastrado. Faça login ou use outro email.'), 
+          user: null 
+        };
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('already registered')) {
+          return { 
+            error: new Error('Este email já está cadastrado. Faça login ou use outro email.'), 
+            user: null 
+          };
+        }
+        throw error;
+      }
 
       if (data.user) {
         const { error: profileError } = await supabase
@@ -158,6 +186,7 @@ export const useProvideAuth = () => {
           .insert({
             user_id: data.user.id,
             name,
+            email,
             avatar_url: null,
             plan: 'free',
             settings: {},
@@ -180,7 +209,10 @@ export const useProvideAuth = () => {
       return { error: null, user: data.user };
     } catch (error) {
       console.error('Registration error:', error);
-      return { error, user: null };
+      return { 
+        error: new Error('Erro ao criar conta. Por favor, tente novamente.'), 
+        user: null 
+      };
     } finally {
       setLoading(false);
     }
