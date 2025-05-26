@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, X, Camera } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import Button from './Button';
 
 interface AvatarUploadProps {
@@ -40,12 +41,37 @@ export default function AvatarUpload({ value, onChange, size = 'md', disabled }:
     setIsLoading(true);
 
     try {
-      // Simular upload para demo
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Criar URL temporária para preview
-      const imageUrl = URL.createObjectURL(file);
-      onChange(imageUrl);
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert({ 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      onChange(publicUrl);
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
       alert('Erro ao fazer upload da imagem');
@@ -54,10 +80,46 @@ export default function AvatarUpload({ value, onChange, size = 'md', disabled }:
     }
   };
 
-  const handleRemove = () => {
-    onChange(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleRemove = async () => {
+    if (!value) return;
+
+    try {
+      setIsLoading(true);
+
+      // Extract file path from URL
+      const filePath = value.split('/').pop();
+      if (!filePath) throw new Error('Invalid file path');
+
+      // Delete from storage
+      const { error: deleteError } = await supabase.storage
+        .from('avatars')
+        .remove([`avatars/${filePath}`]);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          avatar_url: null,
+          updated_at: new Date().toISOString()
+        });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      onChange(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Erro ao remover avatar:', error);
+      alert('Erro ao remover a imagem');
+    } finally {
+      setIsLoading(false);
     }
   };
 
