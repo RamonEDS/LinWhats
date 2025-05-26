@@ -6,9 +6,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
-import Features from './pages/Features';
-import FAQ from './pages/FAQ';
-import Pricing from './pages/Pricing';
 
 function App() {
   const auth = useProvideAuth();
@@ -23,9 +20,6 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/features" element={<Features />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/pricing" element={<Pricing />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
