@@ -2,12 +2,12 @@ import axios from 'axios';
 import { Link, User } from '../types';
 
 // n8n webhook URL
-const API_BASE_URL = 'https://n8n.example.com/webhook/linkwhats';
+const API_BASE_URL = 'https://ramoneds.app.n8n.cloud/webhook/criar-link';
 
 export const api = {
   createLink: async (data: { slug: string; whatsapp: string; message: string }): Promise<Link> => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/criar-link`, data);
+      const response = await axios.post(API_BASE_URL, data);
       return response.data;
     } catch (error) {
       console.error('Error creating link:', error);
