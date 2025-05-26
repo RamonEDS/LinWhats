@@ -26,7 +26,8 @@ import Button from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 
 export default function Dashboard() {
-  // ... (código anterior mantido)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user } = useAuth();
 
   const premiumFeatures = [
     {
@@ -51,23 +52,15 @@ export default function Dashboard() {
     }
   ];
 
-  // ... (código anterior mantido até antes do return)
-
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* ... (código do sidebar mantido) */}
-
       {/* Main Content */}
       <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-[280px]' : 'ml-0'}`}>
-        {/* ... (código do header e modal mantido) */}
-
         {/* Content */}
         <div className="pt-20 px-6 pb-8">
           <div className="max-w-7xl mx-auto">
-            {/* ... (código dos cards de estatísticas mantido) */}
-
             {/* Premium Upgrade Section - só mostra se não for premium */}
-            {user.plan === 'free' && (
+            {user?.plan === 'free' && (
               <div className="mb-8">
                 <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden">
                   <CardContent className="p-8">
