@@ -110,11 +110,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="p-4 border-t">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">
-                    {user?.name?.[0]?.toUpperCase() || 'U'}
-                  </span>
-                </div>
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name || 'Avatar'}
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-sm font-medium text-gray-600">
+                      {user?.name?.[0]?.toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">{user?.name}</p>
@@ -199,11 +207,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="px-4 py-3 border-t">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-600">
-                        {user?.name?.[0]?.toUpperCase() || 'U'}
-                      </span>
-                    </div>
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name || 'Avatar'}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-600">
+                          {user?.name?.[0]?.toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-700">{user?.name}</p>
