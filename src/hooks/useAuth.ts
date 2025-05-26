@@ -27,18 +27,23 @@ export const useProvideAuth = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
       return null;
     }
-
-    return profile;
   };
 
   useEffect(() => {
@@ -59,9 +64,6 @@ export const useProvideAuth = () => {
           email: session.user.email!,
           name: profile?.name || session.user.email!.split('@')[0],
           avatar: profile?.avatar_url || null,
-          isAdmin: profile?.is_admin || false,
-          plan: profile?.plan || 'free',
-          settings: profile?.settings || {},
           createdAt: session.user.created_at,
         });
       } else {
@@ -81,9 +83,6 @@ export const useProvideAuth = () => {
           email: session.user.email!,
           name: profile?.name || session.user.email!.split('@')[0],
           avatar: profile?.avatar_url || null,
-          isAdmin: profile?.is_admin || false,
-          plan: profile?.plan || 'free',
-          settings: profile?.settings || {},
           createdAt: session.user.created_at,
         });
       } else {
@@ -112,9 +111,6 @@ export const useProvideAuth = () => {
         email: data.user.email!,
         name: profile?.name || data.user.email!.split('@')[0],
         avatar: profile?.avatar_url || null,
-        isAdmin: profile?.is_admin || false,
-        plan: profile?.plan || 'free',
-        settings: profile?.settings || {},
         createdAt: data.user.created_at,
       });
 
@@ -140,21 +136,19 @@ export const useProvideAuth = () => {
           .insert({
             user_id: data.user.id,
             name,
-            plan: 'free',
-            settings: {},
-            is_admin: false,
+            avatar_url: null,
           });
 
         if (profileError) throw profileError;
+
+        // Wait for profile to be created
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         setUser({
           id: data.user.id,
           email: data.user.email!,
           name,
           avatar: null,
-          isAdmin: false,
-          plan: 'free',
-          settings: {},
           createdAt: data.user.created_at,
         });
       }
@@ -179,9 +173,6 @@ export const useProvideAuth = () => {
         user_id: user.id,
         name: data.name,
         avatar_url: data.avatar,
-        plan: data.plan,
-        settings: data.settings,
-        is_admin: data.isAdmin,
         updated_at: new Date().toISOString(),
       });
 
