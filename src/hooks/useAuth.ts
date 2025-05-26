@@ -32,7 +32,7 @@ export const useProvideAuth = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return profile;
@@ -150,7 +150,7 @@ export const useProvideAuth = () => {
         .from('profiles')
         .select('email')
         .eq('email', email)
-        .maybeSingle();
+        .single();
 
       if (existingProfile) {
         return { 
