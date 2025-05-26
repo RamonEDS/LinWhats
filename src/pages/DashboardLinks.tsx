@@ -16,6 +16,7 @@ import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import CreateLinkModal from '../components/CreateLinkModal';
+import DashboardLayout from '../components/layout/DashboardLayout';
 
 interface Link {
   id: string;
@@ -62,10 +63,10 @@ export default function DashboardLinks() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+    <DashboardLayout>
+      <div className="py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <Button
                 variant="ghost"
@@ -93,11 +94,7 @@ export default function DashboardLinks() {
               Criar Link
             </Button>
           </div>
-        </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 sm:px-0">
           <AnimatePresence mode="wait">
             {links.length === 0 ? (
               <motion.div
@@ -229,13 +226,13 @@ export default function DashboardLinks() {
             )}
           </AnimatePresence>
         </div>
-      </main>
+      </div>
 
       <CreateLinkModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleCreateSuccess}
       />
-    </div>
+    </DashboardLayout>
   );
 }
