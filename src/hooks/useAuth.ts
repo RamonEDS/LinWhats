@@ -32,7 +32,7 @@ export const useProvideAuth = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -56,16 +56,18 @@ export const useProvideAuth = () => {
         if (session?.user) {
           const profile = await fetchProfile(session.user.id);
           
-          setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            name: profile?.name || session.user.email!.split('@')[0],
-            avatar: profile?.avatar_url || null,
-            isAdmin: false,
-            plan: profile?.plan || 'free',
-            settings: profile?.settings || {},
-            createdAt: session.user.created_at,
-          });
+          if (profile) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+              name: profile.name || session.user.email!.split('@')[0],
+              avatar: profile.avatar_url || null,
+              isAdmin: false,
+              plan: profile.plan || 'free',
+              settings: profile.settings || {},
+              createdAt: session.user.created_at,
+            });
+          }
         } else {
           setUser(null);
         }
@@ -83,16 +85,18 @@ export const useProvideAuth = () => {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
         
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          name: profile?.name || session.user.email!.split('@')[0],
-          avatar: profile?.avatar_url || null,
-          isAdmin: false,
-          plan: profile?.plan || 'free',
-          settings: profile?.settings || {},
-          createdAt: session.user.created_at,
-        });
+        if (profile) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: profile.name || session.user.email!.split('@')[0],
+            avatar: profile.avatar_url || null,
+            isAdmin: false,
+            plan: profile.plan || 'free',
+            settings: profile.settings || {},
+            createdAt: session.user.created_at,
+          });
+        }
       } else {
         setUser(null);
       }
@@ -116,16 +120,18 @@ export const useProvideAuth = () => {
 
       const profile = await fetchProfile(data.user.id);
       
-      setUser({
-        id: data.user.id,
-        email: data.user.email!,
-        name: profile?.name || data.user.email!.split('@')[0],
-        avatar: profile?.avatar_url || null,
-        isAdmin: false,
-        plan: profile?.plan || 'free',
-        settings: profile?.settings || {},
-        createdAt: data.user.created_at,
-      });
+      if (profile) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email!,
+          name: profile.name || data.user.email!.split('@')[0],
+          avatar: profile.avatar_url || null,
+          isAdmin: false,
+          plan: profile.plan || 'free',
+          settings: profile.settings || {},
+          createdAt: data.user.created_at,
+        });
+      }
 
       return { error: null };
     } catch (error) {
