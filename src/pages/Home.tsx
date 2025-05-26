@@ -11,6 +11,7 @@ import Input from '../components/ui/Input';
 import TextArea from '../components/ui/TextArea';
 import { generateWhatsAppLink, isValidPhoneNumber, isValidSlug } from '../lib/utils';
 import { api } from '../lib/api';
+import PhoneInput from '../components/ui/PhoneInput';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -241,15 +242,14 @@ export default function Home() {
                             Your link will be: {window.location.origin}/l/<span className="font-medium">{formData.slug || 'yourname'}</span>
                           </div>
                           
-                          <Input
+                          <PhoneInput
                             label="WhatsApp Number (with country code)"
-                            placeholder="+1234567890"
                             name="whatsapp"
                             value={formData.whatsapp}
-                            onChange={handleChange}
-                            leftIcon={<Phone size={18} />}
+                            onChange={(value) => setFormData(prev => ({ ...prev, whatsapp: value }))}
                             error={errors.whatsapp}
                             required
+                            placeholder="Enter your phone number"
                           />
                           
                           <div className="space-y-2">
