@@ -32,16 +32,12 @@ export const useProvideAuth = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return null;
-      }
-
+      if (error) throw error;
       return profile;
     } catch (error) {
-      console.error('Error in fetchProfile:', error);
+      console.error('Error fetching profile:', error);
       return null;
     }
   };
@@ -61,19 +57,16 @@ export const useProvideAuth = () => {
               id: session.user.id,
               email: session.user.email!,
               name: profile.name || session.user.email!.split('@')[0],
-              avatar: profile.avatar_url || null,
+              avatar: profile.avatar_url,
               isAdmin: false,
               plan: profile.plan || 'free',
               settings: profile.settings || {},
               createdAt: session.user.created_at,
             });
           }
-        } else {
-          setUser(null);
         }
       } catch (error) {
         console.error('Session error:', error);
-        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -90,7 +83,7 @@ export const useProvideAuth = () => {
             id: session.user.id,
             email: session.user.email!,
             name: profile.name || session.user.email!.split('@')[0],
-            avatar: profile.avatar_url || null,
+            avatar: profile.avatar_url,
             isAdmin: false,
             plan: profile.plan || 'free',
             settings: profile.settings || {},
@@ -111,13 +104,14 @@ export const useProvideAuth = () => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        if (error.message === 'Invalid login credentials') {
+        if (error.message.includes('Invalid login credentials')) {
           return { error: new Error('Email ou senha incorretos') };
         }
         throw error;
@@ -130,7 +124,7 @@ export const useProvideAuth = () => {
           id: data.user.id,
           email: data.user.email!,
           name: profile.name || data.user.email!.split('@')[0],
-          avatar: profile.avatar_url || null,
+          avatar: profile.avatar_url,
           isAdmin: false,
           plan: profile.plan || 'free',
           settings: profile.settings || {},
@@ -151,64 +145,71 @@ export const useProvideAuth = () => {
     try {
       setLoading(true);
 
-      // Check if user already exists
-      const { data: existingUser } = await supabase
+      // Check if email exists in profiles
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('user_id')
+        .select('email')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
-      if (existingUser) {
+      if (existingProfile) {
         return { 
           error: new Error('Este email já está cadastrado. Faça login ou use outro email.'), 
           user: null 
         };
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      // Create auth user
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: { name }
+        }
       });
 
-      if (error) {
-        if (error.message.includes('already registered')) {
-          return { 
-            error: new Error('Este email já está cadastrado. Faça login ou use outro email.'), 
-            user: null 
-          };
-        }
-        throw error;
+      if (signUpError) throw signUpError;
+
+      if (!data.user) {
+        throw new Error('Erro ao criar usuário');
       }
 
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user.id,
-            name,
-            email,
-            avatar_url: null,
-            plan: 'free',
-            settings: {},
-          });
-
-        if (profileError) throw profileError;
-
-        setUser({
-          id: data.user.id,
-          email: data.user.email!,
+      // Create profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: data.user.id,
+          email,
           name,
-          avatar: null,
-          isAdmin: false,
+          avatar_url: null,
           plan: 'free',
           settings: {},
-          createdAt: data.user.created_at,
         });
-      }
+
+      if (profileError) throw profileError;
+
+      setUser({
+        id: data.user.id,
+        email: data.user.email!,
+        name,
+        avatar: null,
+        isAdmin: false,
+        plan: 'free',
+        settings: {},
+        createdAt: data.user.created_at,
+      });
 
       return { error: null, user: data.user };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
+      
+      if (error.message.includes('already registered')) {
+        return { 
+          error: new Error('Este email já está cadastrado. Faça login ou use outro email.'), 
+          user: null 
+        };
+      }
+      
       return { 
         error: new Error('Erro ao criar conta. Por favor, tente novamente.'), 
         user: null 
@@ -221,7 +222,8 @@ export const useProvideAuth = () => {
   const logout = async () => {
     try {
       setLoading(true);
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -237,14 +239,14 @@ export const useProvideAuth = () => {
       setLoading(true);
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: user.id,
+        .update({
           name: data.name,
           avatar_url: data.avatar,
           plan: data.plan,
           settings: data.settings,
           updated_at: new Date().toISOString(),
-        });
+        })
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
