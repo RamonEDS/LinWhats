@@ -10,16 +10,16 @@ interface Country {
 }
 
 const countries: Country[] = [
-  { name: 'Brasil', code: 'BR', flag: '🇧🇷', dialCode: '55' },
-  { name: 'Estados Unidos', code: 'US', flag: '🇺🇸', dialCode: '1' },
-  { name: 'Portugal', code: 'PT', flag: '🇵🇹', dialCode: '351' },
-  { name: 'Espanha', code: 'ES', flag: '🇪🇸', dialCode: '34' },
-  { name: 'Argentina', code: 'AR', flag: '🇦🇷', dialCode: '54' },
-  { name: 'Chile', code: 'CL', flag: '🇨🇱', dialCode: '56' },
-  { name: 'Colômbia', code: 'CO', flag: '🇨🇴', dialCode: '57' },
-  { name: 'México', code: 'MX', flag: '🇲🇽', dialCode: '52' },
-  { name: 'Peru', code: 'PE', flag: '🇵🇪', dialCode: '51' },
-  { name: 'Uruguai', code: 'UY', flag: '🇺🇾', dialCode: '598' },
+  { name: '🇧🇷 Brasil', code: 'BR', flag: '🇧🇷', dialCode: '55' },
+  { name: '🇺🇸 Estados Unidos', code: 'US', flag: '🇺🇸', dialCode: '1' },
+  { name: '🇵🇹 Portugal', code: 'PT', flag: '🇵🇹', dialCode: '351' },
+  { name: '🇪🇸 Espanha', code: 'ES', flag: '🇪🇸', dialCode: '34' },
+  { name: '🇦🇷 Argentina', code: 'AR', flag: '🇦🇷', dialCode: '54' },
+  { name: '🇨🇱 Chile', code: 'CL', flag: '🇨🇱', dialCode: '56' },
+  { name: '🇨🇴 Colômbia', code: 'CO', flag: '🇨🇴', dialCode: '57' },
+  { name: '🇲🇽 México', code: 'MX', flag: '🇲🇽', dialCode: '52' },
+  { name: '🇵🇪 Peru', code: 'PE', flag: '🇵🇪', dialCode: '51' },
+  { name: '🇺🇾 Uruguai', code: 'UY', flag: '🇺🇾', dialCode: '598' },
 ];
 
 interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
@@ -100,7 +100,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
                   onClick={() => handleCountrySelect(country)}
                 >
                   <span className="text-lg">{country.flag}</span>
-                  <span>{country.name}</span>
+                  <span>{country.name.split(' ').slice(1).join(' ')}</span>
                   <span className="text-gray-500 ml-auto">+{country.dialCode}</span>
                 </button>
               ))}
