@@ -48,29 +48,33 @@ export const useProvideAuth = () => {
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error getting session:', error);
-        setUser(null);
-        setLoading(false);
-        return;
-      }
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) throw error;
 
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          name: profile?.name || session.user.email!.split('@')[0],
-          avatar: profile?.avatar_url || null,
-          createdAt: session.user.created_at,
-        });
-      } else {
+        if (session?.user) {
+          const profile = await fetchProfile(session.user.id);
+          
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: profile?.name || session.user.email!.split('@')[0],
+            avatar: profile?.avatar_url || null,
+            isAdmin: false,
+            plan: profile?.plan || 'free',
+            settings: profile?.settings || {},
+            createdAt: session.user.created_at,
+          });
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Session error:', error);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     getSession();
@@ -78,11 +82,15 @@ export const useProvideAuth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
+        
         setUser({
           id: session.user.id,
           email: session.user.email!,
           name: profile?.name || session.user.email!.split('@')[0],
           avatar: profile?.avatar_url || null,
+          isAdmin: false,
+          plan: profile?.plan || 'free',
+          settings: profile?.settings || {},
           createdAt: session.user.created_at,
         });
       } else {
@@ -98,6 +106,7 @@ export const useProvideAuth = () => {
 
   const login = async (email: string, password: string) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -106,22 +115,30 @@ export const useProvideAuth = () => {
       if (error) throw error;
 
       const profile = await fetchProfile(data.user.id);
+      
       setUser({
         id: data.user.id,
         email: data.user.email!,
         name: profile?.name || data.user.email!.split('@')[0],
         avatar: profile?.avatar_url || null,
+        isAdmin: false,
+        plan: profile?.plan || 'free',
+        settings: profile?.settings || {},
         createdAt: data.user.created_at,
       });
 
       return { error: null };
     } catch (error) {
+      console.error('Login error:', error);
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const register = async (email: string, password: string, name: string) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -130,55 +147,76 @@ export const useProvideAuth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Create profile
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             user_id: data.user.id,
             name,
             avatar_url: null,
+            plan: 'free',
+            settings: {},
           });
 
         if (profileError) throw profileError;
-
-        // Wait for profile to be created
-        await new Promise(resolve => setTimeout(resolve, 1000));
 
         setUser({
           id: data.user.id,
           email: data.user.email!,
           name,
           avatar: null,
+          isAdmin: false,
+          plan: 'free',
+          settings: {},
           createdAt: data.user.created_at,
         });
       }
 
       return { error: null, user: data.user };
     } catch (error) {
+      console.error('Registration error:', error);
       return { error, user: null };
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    try {
+      setLoading(true);
+      await supabase.auth.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateProfile = async (data: Partial<User>) => {
     if (!user) return;
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        user_id: user.id,
-        name: data.name,
-        avatar_url: data.avatar,
-        updated_at: new Date().toISOString(),
-      });
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          name: data.name,
+          avatar_url: data.avatar,
+          plan: data.plan,
+          settings: data.settings,
+          updated_at: new Date().toISOString(),
+        });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    setUser(prev => prev ? { ...prev, ...data } : null);
+      setUser(prev => prev ? { ...prev, ...data } : null);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
