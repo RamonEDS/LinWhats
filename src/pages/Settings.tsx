@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import AvatarUpload from '../components/ui/AvatarUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import DashboardLayout from '../components/layout/DashboardLayout';
 
@@ -29,6 +30,7 @@ export default function Settings() {
     email: '',
     currentPassword: '',
     newPassword: '',
+    avatar: null as string | null,
   });
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -45,6 +47,7 @@ export default function Settings() {
         ...prev,
         name: user.name || '',
         email: user.email || '',
+        avatar: user.avatar || null,
       }));
     }
   }, [user, loading, navigate]);
@@ -136,11 +139,11 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-6 mb-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full flex items-center justify-center">
-                      <span className="text-2xl font-bold text-primary-700">
-                        {user.name?.[0]?.toUpperCase() || 'U'}
-                      </span>
-                    </div>
+                    <AvatarUpload
+                      value={formData.avatar}
+                      onChange={(value) => setFormData(prev => ({ ...prev, avatar: value }))}
+                      size="lg"
+                    />
                     <div>
                       <h3 className="text-lg font-medium">{user.name}</h3>
                       <p className="text-sm text-gray-500">{user.email}</p>
