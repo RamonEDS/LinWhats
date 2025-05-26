@@ -12,17 +12,20 @@ import {
   Clock,
   Lock,
   ChevronRight,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import CreateLinkModal from '../components/CreateLinkModal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [showPlans, setShowPlans] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -31,7 +34,11 @@ export default function Dashboard() {
   }, [user, loading, navigate]);
 
   const handleCreateFirstLink = () => {
-    navigate('/dashboard/links/new');
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreateSuccess = () => {
+    // Refresh links or show success message
   };
 
   const stats = [
@@ -98,12 +105,21 @@ export default function Dashboard() {
         {/* Header with Premium Badge */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Painel de Controle</h1>
-          {user?.plan === 'pro' ? (
-            <div className="flex items-center bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-1 rounded-full">
-              <Diamond className="h-4 w-4 mr-2" />
-              <span className="text-sm font-medium">Premium Ativo</span>
-            </div>
-          ) : null}
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="primary"
+              onClick={() => setIsCreateModalOpen(true)}
+              leftIcon={<Plus size={18} />}
+            >
+              Criar Link
+            </Button>
+            {user?.plan === 'pro' && (
+              <div className="flex items-center bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-1 rounded-full">
+                <Diamond className="h-4 w-4 mr-2" />
+                <span className="text-sm font-medium">Premium Ativo</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -235,6 +251,12 @@ export default function Dashboard() {
           </Card>
         </motion.div>
       </div>
+
+      <CreateLinkModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   );
 }
