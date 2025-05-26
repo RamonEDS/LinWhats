@@ -2,146 +2,239 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   MessageSquare, 
-  Settings, 
-  BarChart, 
-  Check, 
-  X,
-  Home,
+  BarChart,
   Users,
-  Link as LinkIcon,
-  Bell,
-  ChevronDown,
-  Menu,
-  LogOut,
   Diamond,
   Zap,
   Shield,
   LineChart,
   Palette,
-  Clock
+  Clock,
+  Lock,
+  ChevronRight,
+  Link as LinkIcon
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [showPlans, setShowPlans] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
 
   const handleCreateFirstLink = () => {
     navigate('/dashboard/links/new');
   };
 
-  const premiumFeatures = [
+  const stats = [
     {
-      icon: <LineChart className="h-6 w-6 text-primary-500" />,
-      title: "Estatísticas Avançadas",
-      description: "Análise detalhada de cliques, conversões e comportamento"
+      title: "Total de Cliques",
+      value: "0",
+      icon: <BarChart className="h-6 w-6 text-primary-500" />,
+      isPremium: false
     },
     {
-      icon: <Shield className="h-6 w-6 text-green-500" />,
-      title: "Links Permanentes",
-      description: "Seus links nunca expiram e ficam sempre disponíveis"
+      title: "Links Ativos",
+      value: "0",
+      icon: <LinkIcon className="h-6 w-6 text-accent-500" />,
+      isPremium: false
     },
     {
-      icon: <Palette className="h-6 w-6 text-purple-500" />,
-      title: "Personalização Total",
-      description: "Customize cores, imagens e estilo da sua página"
-    },
-    {
-      icon: <Clock className="h-6 w-6 text-blue-500" />,
-      title: "Agendamento",
-      description: "Programe horários específicos para seus links"
+      title: "Visitantes Únicos",
+      value: "Premium",
+      icon: <Users className="h-6 w-6 text-gray-400" />,
+      isPremium: true
     }
   ];
 
+  const premiumFeatures = [
+    {
+      icon: <LineChart className="h-6 w-6" />,
+      title: "Estatísticas Avançadas",
+      description: "Análise detalhada de cliques, conversões e comportamento",
+      color: "text-primary-500"
+    },
+    {
+      icon: <Shield className="h-6 w-6" />,
+      title: "Links Permanentes",
+      description: "Seus links nunca expiram e ficam sempre disponíveis",
+      color: "text-green-500"
+    },
+    {
+      icon: <Palette className="h-6 w-6" />,
+      title: "Personalização Total",
+      description: "Customize cores, imagens e estilo da sua página",
+      color: "text-purple-500"
+    },
+    {
+      icon: <Clock className="h-6 w-6" />,
+      title: "Agendamento Inteligente",
+      description: "Programe horários específicos para seus links",
+      color: "text-blue-500"
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin">
+          <MessageSquare className="h-8 w-8 text-whatsapp-500" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-[280px]' : 'ml-0'}`}>
-        {/* Content */}
-        <div className="pt-20 px-6 pb-8">
-          <div className="max-w-7xl mx-auto">
-            {/* Premium Upgrade Section - só mostra se não for premium */}
-            {user?.plan === 'free' && (
-              <div className="mb-8">
-                <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden">
-                  <CardContent className="p-8">
-                    <div className="flex flex-col md:flex-row items-center justify-between">
-                      <div className="mb-6 md:mb-0 md:mr-8">
-                        <div className="flex items-center mb-4">
-                          <Diamond className="h-8 w-8 text-yellow-400 mr-3" />
-                          <h2 className="text-2xl font-bold">Desbloqueie todo o potencial do LinkWhats</h2>
-                        </div>
-                        <p className="text-gray-300 mb-6 max-w-xl">
-                          Aprimore sua presença no WhatsApp com recursos exclusivos e análises avançadas.
-                          Transforme visitantes em clientes com nossa solução profissional.
-                        </p>
-                        <Button
-                          variant="whatsapp"
-                          size="lg"
-                          onClick={() => setShowPlans(true)}
-                          leftIcon={<Zap size={20} />}
-                          className="shadow-lg transform transition hover:scale-105"
-                        >
-                          Assine por apenas R$14,90/mês
-                        </Button>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
-                        {premiumFeatures.map((feature, index) => (
-                          <div
-                            key={index}
-                            className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-4 flex items-start space-x-3"
-                          >
-                            <div className="flex-shrink-0">
-                              {feature.icon}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-white">
-                                {feature.title}
-                              </h3>
-                              <p className="text-sm text-gray-300">
-                                {feature.description}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header with Premium Badge */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Painel de Controle</h1>
+          {user?.plan === 'pro' ? (
+            <div className="flex items-center bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-1 rounded-full">
+              <Diamond className="h-4 w-4 mr-2" />
+              <span className="text-sm font-medium">Premium Ativo</span>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Card className={stat.isPremium && user?.plan !== 'pro' ? 'bg-gray-50' : ''}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                      <div className="flex items-center mt-1">
+                        {stat.isPremium && user?.plan !== 'pro' ? (
+                          <Lock className="h-5 w-5 text-gray-400 mr-2" />
+                        ) : null}
+                        <p className="text-2xl font-bold">{stat.value}</p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Seus Links</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="h-8 w-8 text-gray-400" />
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      stat.isPremium && user?.plan !== 'pro' ? 'bg-gray-100' : 'bg-primary-50'
+                    }`}>
+                      {stat.icon}
+                    </div>
                   </div>
-                  <p className="text-lg text-gray-600 mb-4">
-                    Você ainda não criou nenhum link
-                  </p>
-                  <Button
-                    variant="primary"
-                    onClick={handleCreateFirstLink}
-                    leftIcon={<MessageSquare size={18} />}
-                  >
-                    Criar Meu Primeiro Link
-                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Premium Upgrade Section */}
+        {user?.plan !== 'pro' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden">
+              <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row items-start justify-between">
+                  <div className="mb-6 md:mb-0 md:mr-8">
+                    <div className="flex items-center mb-4">
+                      <Diamond className="h-8 w-8 text-yellow-400 mr-3" />
+                      <h2 className="text-2xl font-bold">Desbloqueie todo o potencial do LinkWhats</h2>
+                    </div>
+                    <p className="text-gray-300 mb-6 max-w-xl">
+                      Aprimore sua presença no WhatsApp com recursos exclusivos e análises avançadas.
+                      Transforme visitantes em clientes com nossa solução profissional.
+                    </p>
+                    <Button
+                      variant="whatsapp"
+                      size="lg"
+                      onClick={() => navigate('/upgrade')}
+                      leftIcon={<Zap size={20} />}
+                      className="shadow-lg transform transition hover:scale-105"
+                    >
+                      Assinar por apenas R$14,90/mês
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
+                    {premiumFeatures.map((feature, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-4 flex items-start space-x-3"
+                      >
+                        <div className={`flex-shrink-0 ${feature.color}`}>
+                          {feature.icon}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-white">
+                            {feature.title}
+                          </h3>
+                          <p className="text-sm text-gray-300">
+                            {feature.description}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </main>
+          </motion.div>
+        )}
+
+        {/* Links Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Seus Links</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/dashboard/links')}
+              >
+                Ver Todos
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="h-8 w-8 text-gray-400" />
+                </div>
+                <p className="text-lg text-gray-600 mb-4">
+                  Você ainda não criou nenhum link
+                </p>
+                <Button
+                  variant="primary"
+                  onClick={handleCreateFirstLink}
+                  leftIcon={<MessageSquare size={18} />}
+                >
+                  Criar Meu Primeiro Link
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 }
