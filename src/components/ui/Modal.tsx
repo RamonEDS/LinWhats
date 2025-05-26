@@ -53,7 +53,7 @@ export default function Modal({ isOpen, onClose, children, title }: ModalProps) 
           >
             <div className="bg-white rounded-2xl shadow-xl mx-4">
               <div className="flex items-center justify-between p-6 border-b">
-                <h2 className="text-2xl font-semibold text-gray-900 flex items-center space-x-3">
+                <h2 className="text-2xl font-semibold text-gray-900">
                   {title}
                 </h2>
                 <button
