@@ -35,7 +35,8 @@ export default function Modal({ isOpen, onClose, children, title }: ModalProps) 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-40"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
             onClick={onClose}
           />
           
@@ -43,22 +44,30 @@ export default function Modal({ isOpen, onClose, children, title }: ModalProps) 
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.5 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-50"
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 30
+            }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] z-50 overflow-hidden"
           >
             <div className="bg-white rounded-2xl shadow-xl mx-4">
               <div className="flex items-center justify-between p-6 border-b">
-                <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 flex items-center space-x-3">
+                  {title}
+                </h2>
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-500 transition-colors"
+                  className="text-gray-400 hover:text-gray-500 transition-colors p-2 hover:bg-gray-100 rounded-lg"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
               
-              <div className="p-6">
-                {children}
+              <div className="overflow-y-auto max-h-[calc(90vh-8rem)]">
+                <div className="p-6">
+                  {children}
+                </div>
               </div>
             </div>
           </motion.div>
