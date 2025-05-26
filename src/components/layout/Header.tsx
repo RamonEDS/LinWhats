@@ -58,7 +58,7 @@ export default function Header() {
           {user ? (
             <div className="flex items-center space-x-4">
               <RouterLink to="/dashboard">
-                <Button variant="primary" leftIcon={<User size={18} />}>
+                <Button variant="primary\" leftIcon={<User size={18} />}>
                   Dashboard
                 </Button>
               </RouterLink>
@@ -113,7 +113,7 @@ export default function Header() {
             <div className="border-t border-gray-200 pt-4 flex flex-col space-y-3">
               {user ? (
                 <>
-                  <RouterLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                  <RouterLink to="/dashboard\" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="primary" fullWidth leftIcon={<User size={18} />}>
                       Dashboard
                     </Button>
