@@ -24,51 +24,64 @@ export const useAuth = () => useContext(AuthContext);
 
 export const useProvideAuth = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-    if (profile) {
-      return {
-        id: userId,
-        email: profile.email || '',
-        name: profile.name || '',
-        avatar: profile.avatar_url,
-        isAdmin: false,
-        plan: profile.plan || 'free',
-        settings: profile.settings || {},
-        createdAt: new Date().toISOString(),
-      };
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      if (profile) {
+        return {
+          id: userId,
+          email: profile.email,
+          name: profile.name,
+          avatar: profile.avatar_url,
+          isAdmin: false,
+          plan: profile.plan || 'free',
+          settings: profile.settings || {},
+          createdAt: profile.created_at,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      return null;
     }
-
-    return null;
   };
 
   useEffect(() => {
+    const session = supabase.auth.getSession();
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setLoading(true);
+      
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
-        if (profile) {
-          setUser(profile);
-        }
+        setUser(profile);
       } else {
         setUser(null);
       }
+      
+      setLoading(false);
     });
 
     // Check initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    session.then(async ({ data: { session } }) => {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
-        if (profile) {
-          setUser(profile);
-        }
+        setUser(profile);
       }
+      setLoading(false);
     });
 
     return () => {
@@ -86,15 +99,15 @@ export const useProvideAuth = () => {
 
       if (error) throw error;
 
-      const profile = await fetchProfile(data.user.id);
-      if (profile) {
+      if (data.user) {
+        const profile = await fetchProfile(data.user.id);
         setUser(profile);
       }
 
       return { error: null };
     } catch (error: any) {
       console.error('Login error:', error);
-      return { error: new Error(error.message || 'Email ou senha incorretos') };
+      return { error };
     } finally {
       setLoading(false);
     }
@@ -106,18 +119,16 @@ export const useProvideAuth = () => {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: { name }
-        }
       });
 
       if (signUpError) throw signUpError;
 
       if (!data.user) {
-        throw new Error('Erro ao criar usuário');
+        throw new Error('No user returned from signUp');
       }
 
-      await supabase.from('profiles').insert({
+      // Create profile
+      const { error: profileError } = await supabase.from('profiles').insert({
         user_id: data.user.id,
         email,
         name,
@@ -126,16 +137,16 @@ export const useProvideAuth = () => {
         settings: {},
       });
 
+      if (profileError) throw profileError;
+
       const profile = await fetchProfile(data.user.id);
-      if (profile) {
-        setUser(profile);
-      }
+      setUser(profile);
 
       return { error: null, user: data.user };
     } catch (error: any) {
       console.error('Registration error:', error);
       return { 
-        error: new Error(error.message || 'Erro ao criar conta. Por favor, tente novamente.'),
+        error,
         user: null 
       };
     } finally {
@@ -146,7 +157,8 @@ export const useProvideAuth = () => {
   const signOut = async () => {
     try {
       setLoading(true);
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -160,7 +172,7 @@ export const useProvideAuth = () => {
 
     try {
       setLoading(true);
-      await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({
           name: data.name,
@@ -170,6 +182,8 @@ export const useProvideAuth = () => {
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id);
+
+      if (error) throw error;
 
       setUser(prev => prev ? { ...prev, ...data } : null);
     } catch (error) {
