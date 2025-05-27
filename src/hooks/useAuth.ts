@@ -25,7 +25,6 @@ export const useAuth = () => useContext(AuthContext);
 export const useProvideAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sessionTimeout, setSessionTimeout] = useState<NodeJS.Timeout>();
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -70,29 +69,17 @@ export const useProvideAuth = () => {
             });
           }
         }
+        
+        if (mounted) {
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Session error:', error);
-      } finally {
         if (mounted) {
           setLoading(false);
         }
       }
     };
-
-    // Clear any existing timeout
-    if (sessionTimeout) {
-      clearTimeout(sessionTimeout);
-    }
-
-    // Set new timeout
-    const timeout = setTimeout(() => {
-      if (mounted && loading) {
-        setLoading(false);
-        console.error('Session loading timeout');
-      }
-    }, 5000);
-
-    setSessionTimeout(timeout);
 
     getSession();
     
@@ -122,9 +109,6 @@ export const useProvideAuth = () => {
 
     return () => {
       mounted = false;
-      if (sessionTimeout) {
-        clearTimeout(sessionTimeout);
-      }
       subscription.unsubscribe();
     };
   }, []);
