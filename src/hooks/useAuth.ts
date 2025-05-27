@@ -27,7 +27,7 @@ export const useProvideAuth = () => {
   const [loading, setLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
-  const TIMEOUT_DURATION = 15000; // Increased to 15 seconds
+  const TIMEOUT_DURATION = 30000; // Increased to 30 seconds
 
   const fetchProfile = async (userId: string) => {
     try {
