@@ -43,20 +43,16 @@ export const useProvideAuth = () => {
   };
 
   useEffect(() => {
-    let mounted = true;
-
     const getSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) throw error;
 
-        if (!mounted) return;
-
         if (session?.user) {
           const profile = await fetchProfile(session.user.id);
           
-          if (profile && mounted) {
+          if (profile) {
             setUser({
               id: session.user.id,
               email: session.user.email!,
@@ -69,27 +65,20 @@ export const useProvideAuth = () => {
             });
           }
         }
-        
-        if (mounted) {
-          setLoading(false);
-        }
       } catch (error) {
         console.error('Session error:', error);
-        if (mounted) {
-          setLoading(false);
-        }
+      } finally {
+        setLoading(false);
       }
     };
 
     getSession();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
         
-        if (profile && mounted) {
+        if (profile) {
           setUser({
             id: session.user.id,
             email: session.user.email!,
@@ -108,15 +97,12 @@ export const useProvideAuth = () => {
     });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -143,15 +129,11 @@ export const useProvideAuth = () => {
     } catch (error: any) {
       console.error('Login error:', error);
       return { error: new Error(error.message || 'Email ou senha incorretos') };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
-      setLoading(true);
-
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -205,21 +187,16 @@ export const useProvideAuth = () => {
         error: new Error('Erro ao criar conta. Por favor, tente novamente.'), 
         user: null 
       };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
