@@ -22,8 +22,16 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await signUp(formData.email, formData.password, formData.name);
-      navigate('/dashboard');
+      const { error: signUpError, user } = await signUp(formData.email, formData.password, formData.name);
+      
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
+
+      if (user) {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError('Erro ao criar conta. Tente novamente.');
     } finally {
