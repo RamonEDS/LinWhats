@@ -110,12 +110,7 @@ export const useProvideAuth = () => {
         password,
       });
 
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          return { error: new Error('Email ou senha incorretos') };
-        }
-        throw error;
-      }
+      if (error) throw error;
 
       const profile = await fetchProfile(data.user.id);
       
@@ -133,9 +128,9 @@ export const useProvideAuth = () => {
       }
 
       return { error: null };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      return { error: new Error('Erro ao fazer login. Tente novamente.') };
+      return { error: new Error('Email ou senha incorretos') };
     } finally {
       setLoading(false);
     }
@@ -144,20 +139,6 @@ export const useProvideAuth = () => {
   const signUp = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
-
-      // Check if email exists in profiles
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email)
-        .single();
-
-      if (existingProfile) {
-        return { 
-          error: new Error('Este email já está cadastrado. Faça login ou use outro email.'), 
-          user: null 
-        };
-      }
 
       // Create auth user
       const { data, error: signUpError } = await supabase.auth.signUp({
