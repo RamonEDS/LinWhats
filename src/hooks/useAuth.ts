@@ -13,7 +13,7 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: true,
+  loading: false,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null, user: null }),
   signOut: async () => {},
@@ -67,10 +67,6 @@ export const useProvideAuth = () => {
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
       }
     };
 
@@ -95,7 +91,6 @@ export const useProvideAuth = () => {
       } else if (mounted) {
         setUser(null);
       }
-      setLoading(false);
     });
 
     return () => {
