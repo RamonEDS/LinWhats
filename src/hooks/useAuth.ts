@@ -97,7 +97,24 @@ export const useProvideAuth = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Provide more specific error messages based on the error code
+        if (error.message === 'Invalid login credentials') {
+          return { error: { 
+            message: 'Email ou senha incorretos. Por favor, verifique suas credenciais e tente novamente.',
+            code: 'invalid_credentials'
+          }};
+        }
+        
+        if (error.message.includes('Email not confirmed')) {
+          return { error: {
+            message: 'Por favor, confirme seu email antes de fazer login.',
+            code: 'email_not_confirmed'
+          }};
+        }
+
+        throw error;
+      }
 
       if (data.user) {
         const profile = await fetchProfile(data.user.id);
@@ -107,7 +124,12 @@ export const useProvideAuth = () => {
       return { error: null };
     } catch (error: any) {
       console.error('Login error:', error);
-      return { error };
+      return { 
+        error: {
+          message: 'Ocorreu um erro ao fazer login. Por favor, tente novamente.',
+          code: 'unknown_error'
+        }
+      };
     } finally {
       setLoading(false);
     }
