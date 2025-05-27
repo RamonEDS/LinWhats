@@ -43,16 +43,16 @@ export const useProvideAuth = () => {
   };
 
   useEffect(() => {
-    const getSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) throw error;
+    let mounted = true;
 
-        if (session?.user) {
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user && mounted) {
           const profile = await fetchProfile(session.user.id);
           
-          if (profile) {
+          if (profile && mounted) {
             setUser({
               id: session.user.id,
               email: session.user.email!,
@@ -66,19 +66,21 @@ export const useProvideAuth = () => {
           }
         }
       } catch (error) {
-        console.error('Session error:', error);
+        console.error('Auth initialization error:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    getSession();
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
+      if (session?.user && mounted) {
         const profile = await fetchProfile(session.user.id);
         
-        if (profile) {
+        if (profile && mounted) {
           setUser({
             id: session.user.id,
             email: session.user.email!,
@@ -90,13 +92,13 @@ export const useProvideAuth = () => {
             createdAt: session.user.created_at,
           });
         }
-      } else {
+      } else if (mounted) {
         setUser(null);
       }
-      setLoading(false);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -204,7 +206,6 @@ export const useProvideAuth = () => {
     if (!user) return;
 
     try {
-      setLoading(true);
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -222,8 +223,6 @@ export const useProvideAuth = () => {
     } catch (error) {
       console.error('Profile update error:', error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
