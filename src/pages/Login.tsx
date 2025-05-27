@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -7,7 +7,7 @@ import Input from '../components/ui/Input';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -15,20 +15,42 @@ export default function Login() {
     password: '',
   });
 
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      await signIn(formData.email, formData.password);
+      const { error: signInError } = await signIn(formData.email, formData.password);
+      
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+
       navigate('/dashboard');
-    } catch (err) {
-      setError('Email ou senha inválidos');
+    } catch (err: any) {
+      setError(err.message || 'Erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin">
+          <Lock className="h-8 w-8 text-primary-500" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

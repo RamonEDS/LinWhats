@@ -43,6 +43,8 @@ export const useProvideAuth = () => {
   };
 
   useEffect(() => {
+    let timeoutId: number;
+
     const getSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -67,10 +69,20 @@ export const useProvideAuth = () => {
         }
       } catch (error) {
         console.error('Session error:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
+
+    // Set a timeout to show error if loading takes too long
+    timeoutId = window.setTimeout(() => {
+      if (loading) {
+        console.error('Session loading timeout');
+        setLoading(false);
+        setUser(null);
+      }
+    }, 5000);
 
     getSession();
     
@@ -97,6 +109,7 @@ export const useProvideAuth = () => {
     });
 
     return () => {
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
@@ -130,7 +143,7 @@ export const useProvideAuth = () => {
       return { error: null };
     } catch (error: any) {
       console.error('Login error:', error);
-      return { error: new Error('Email ou senha incorretos') };
+      return { error: new Error(error.message || 'Email ou senha incorretos') };
     } finally {
       setLoading(false);
     }
