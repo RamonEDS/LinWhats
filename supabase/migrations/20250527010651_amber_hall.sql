@@ -1,15 +1,3 @@
-/*
-  # Initial Schema Setup
-
-  1. Tables
-    - profiles: User profiles with authentication data
-    - links: WhatsApp link management
-  
-  2. Security
-    - Enable RLS on all tables
-    - Add policies for authenticated users
-*/
-
 -- Drop existing tables if they exist
 drop table if exists links;
 drop table if exists profiles;
@@ -27,30 +15,6 @@ create table profiles (
   created_at timestamptz default now()
 );
 
--- Enable RLS
-alter table profiles enable row level security;
-
--- Create RLS policies
-create policy "Users can view their own profile"
-  on profiles for select
-  to authenticated
-  using (auth.uid() = user_id);
-
-create policy "Users can update their own profile"
-  on profiles for update
-  to authenticated
-  using (auth.uid() = user_id);
-
-create policy "Users can insert their own profile"
-  on profiles for insert
-  to authenticated
-  with check (auth.uid() = user_id);
-
-create policy "Anyone can check if email exists" 
-  on profiles for select 
-  to anon
-  using (true);
-
 -- Create links table
 create table links (
   id uuid primary key default gen_random_uuid(),
@@ -65,35 +29,6 @@ create table links (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
-
--- Enable RLS
-alter table links enable row level security;
-
--- Create RLS policies
-create policy "Anyone can view active links"
-  on links for select
-  to anon
-  using (is_active = true);
-
-create policy "Users can view their own links"
-  on links for select
-  to authenticated
-  using (auth.uid() = user_id);
-
-create policy "Users can create their own links"
-  on links for insert
-  to authenticated
-  with check (auth.uid() = user_id);
-
-create policy "Users can update their own links"
-  on links for update
-  to authenticated
-  using (auth.uid() = user_id);
-
-create policy "Users can delete their own links"
-  on links for delete
-  to authenticated
-  using (auth.uid() = user_id);
 
 -- Create indexes
 create index idx_profiles_email on profiles(email);
