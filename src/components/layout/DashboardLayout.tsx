@@ -22,7 +22,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const menuItems = [
@@ -53,9 +53,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   const handleLogout = async () => {
-    await logout();
+    await signOut();
     navigate('/login');
   };
+
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
