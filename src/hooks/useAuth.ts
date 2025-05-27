@@ -5,18 +5,18 @@ import { User } from '../types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ error: any }>;
-  register: (email: string, password: string, name: string) => Promise<{ error: any, user: any }>;
-  logout: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any, user: any }>;
+  signOut: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  login: async () => ({ error: null }),
-  register: async () => ({ error: null, user: null }),
-  logout: async () => {},
+  signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null, user: null }),
+  signOut: async () => {},
   updateProfile: async () => {},
 });
 
@@ -101,7 +101,7 @@ export const useProvideAuth = () => {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
       
@@ -141,7 +141,7 @@ export const useProvideAuth = () => {
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
 
@@ -219,7 +219,7 @@ export const useProvideAuth = () => {
     }
   };
 
-  const logout = async () => {
+  const signOut = async () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
@@ -262,9 +262,9 @@ export const useProvideAuth = () => {
   return {
     user,
     loading,
-    login,
-    register,
-    logout,
+    signIn,
+    signUp,
+    signOut,
     updateProfile,
   };
 };
