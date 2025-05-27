@@ -33,8 +33,6 @@ export default function Login() {
         setError(signInError.message);
         return;
       }
-
-      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login. Tente novamente.');
     } finally {

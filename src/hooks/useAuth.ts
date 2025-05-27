@@ -25,22 +25,7 @@ export const useAuth = () => useContext(AuthContext);
 export const useProvideAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 5; // Increased from 3 to 5
-  const INITIAL_RETRY_DELAY = 1000; // Start with 1 second
-  const MAX_RETRY_DELAY = 10000; // Max delay of 10 seconds
-  const TIMEOUT_DURATION = 60000; // Increased to 60 seconds
-
-  // Calculate exponential backoff with jitter
-  const getRetryDelay = (retryCount: number) => {
-    const baseDelay = Math.min(
-      MAX_RETRY_DELAY,
-      INITIAL_RETRY_DELAY * Math.pow(2, retryCount)
-    );
-    // Add random jitter of ±30%
-    const jitter = baseDelay * 0.3 * (Math.random() * 2 - 1);
-    return baseDelay + jitter;
-  };
+  const [sessionTimeout, setSessionTimeout] = useState<NodeJS.Timeout>();
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -50,10 +35,7 @@ export const useProvideAuth = () => {
         .eq('user_id', userId)
         .single();
 
-      if (error) {
-        console.error('Profile fetch error:', error.message);
-        throw error;
-      }
+      if (error) throw error;
       return profile;
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -62,17 +44,13 @@ export const useProvideAuth = () => {
   };
 
   useEffect(() => {
-    let timeoutId: number;
     let mounted = true;
 
     const getSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('Session fetch error:', error.message);
-          throw error;
-        }
+        if (error) throw error;
 
         if (!mounted) return;
 
@@ -90,46 +68,31 @@ export const useProvideAuth = () => {
               settings: profile.settings || {},
               createdAt: session.user.created_at,
             });
-            setLoading(false);
-            setRetryCount(0); // Reset retry count on success
-          } else if (mounted && retryCount < MAX_RETRIES) {
-            const delay = getRetryDelay(retryCount);
-            console.log(`Retrying profile fetch in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-            setRetryCount(prev => prev + 1);
-            setTimeout(getSession, delay);
-          } else if (mounted) {
-            console.error('Failed to fetch profile after maximum retries');
-            setLoading(false);
-            setUser(null);
-          }
-        } else {
-          if (mounted) {
-            setUser(null);
-            setLoading(false);
           }
         }
       } catch (error) {
         console.error('Session error:', error);
-        if (mounted && retryCount < MAX_RETRIES) {
-          const delay = getRetryDelay(retryCount);
-          console.log(`Retrying session fetch in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-          setRetryCount(prev => prev + 1);
-          setTimeout(getSession, delay);
-        } else if (mounted) {
-          setUser(null);
+      } finally {
+        if (mounted) {
           setLoading(false);
         }
       }
     };
 
-    // Set a timeout to show error if loading takes too long
-    timeoutId = window.setTimeout(() => {
+    // Clear any existing timeout
+    if (sessionTimeout) {
+      clearTimeout(sessionTimeout);
+    }
+
+    // Set new timeout
+    const timeout = setTimeout(() => {
       if (mounted && loading) {
-        console.error('Session loading timeout after', TIMEOUT_DURATION, 'ms');
         setLoading(false);
-        setUser(null);
+        console.error('Session loading timeout');
       }
-    }, TIMEOUT_DURATION);
+    }, 5000);
+
+    setSessionTimeout(timeout);
 
     getSession();
     
@@ -159,10 +122,12 @@ export const useProvideAuth = () => {
 
     return () => {
       mounted = false;
-      clearTimeout(timeoutId);
+      if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+      }
       subscription.unsubscribe();
     };
-  }, [retryCount]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -203,7 +168,6 @@ export const useProvideAuth = () => {
     try {
       setLoading(true);
 
-      // Create auth user
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -218,7 +182,6 @@ export const useProvideAuth = () => {
         throw new Error('Erro ao criar usuário');
       }
 
-      // Create profile
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
