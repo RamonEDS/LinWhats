@@ -27,74 +27,51 @@ export const useProvideAuth = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchProfile = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-      if (error) throw error;
-      return profile;
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      return null;
+    if (profile) {
+      return {
+        id: userId,
+        email: profile.email || '',
+        name: profile.name || '',
+        avatar: profile.avatar_url,
+        isAdmin: false,
+        plan: profile.plan || 'free',
+        settings: profile.settings || {},
+        createdAt: new Date().toISOString(),
+      };
     }
+
+    return null;
   };
 
   useEffect(() => {
-    let mounted = true;
-
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user && mounted) {
-          const profile = await fetchProfile(session.user.id);
-          
-          if (profile && mounted) {
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              name: profile.name || session.user.email!.split('@')[0],
-              avatar: profile.avatar_url,
-              isAdmin: false,
-              plan: profile.plan || 'free',
-              settings: profile.settings || {},
-              createdAt: session.user.created_at,
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-      }
-    };
-
-    initAuth();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user && mounted) {
+      if (session?.user) {
         const profile = await fetchProfile(session.user.id);
-        
-        if (profile && mounted) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            name: profile.name || session.user.email!.split('@')[0],
-            avatar: profile.avatar_url,
-            isAdmin: false,
-            plan: profile.plan || 'free',
-            settings: profile.settings || {},
-            createdAt: session.user.created_at,
-          });
+        if (profile) {
+          setUser(profile);
         }
-      } else if (mounted) {
+      } else {
         setUser(null);
       }
     });
 
+    // Check initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const profile = await fetchProfile(session.user.id);
+        if (profile) {
+          setUser(profile);
+        }
+      }
+    });
+
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -110,18 +87,8 @@ export const useProvideAuth = () => {
       if (error) throw error;
 
       const profile = await fetchProfile(data.user.id);
-      
       if (profile) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email!,
-          name: profile.name || data.user.email!.split('@')[0],
-          avatar: profile.avatar_url,
-          isAdmin: false,
-          plan: profile.plan || 'free',
-          settings: profile.settings || {},
-          createdAt: data.user.created_at,
-        });
+        setUser(profile);
       }
 
       return { error: null };
@@ -150,43 +117,25 @@ export const useProvideAuth = () => {
         throw new Error('Erro ao criar usuário');
       }
 
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: data.user.id,
-          email,
-          name,
-          avatar_url: null,
-          plan: 'free',
-          settings: {},
-        });
-
-      if (profileError) throw profileError;
-
-      setUser({
-        id: data.user.id,
-        email: data.user.email!,
+      await supabase.from('profiles').insert({
+        user_id: data.user.id,
+        email,
         name,
-        avatar: null,
-        isAdmin: false,
+        avatar_url: null,
         plan: 'free',
         settings: {},
-        createdAt: data.user.created_at,
       });
+
+      const profile = await fetchProfile(data.user.id);
+      if (profile) {
+        setUser(profile);
+      }
 
       return { error: null, user: data.user };
     } catch (error: any) {
       console.error('Registration error:', error);
-      
-      if (error.message.includes('already registered')) {
-        return { 
-          error: new Error('Este email já está cadastrado. Faça login ou use outro email.'), 
-          user: null 
-        };
-      }
-      
       return { 
-        error: new Error('Erro ao criar conta. Por favor, tente novamente.'), 
+        error: new Error(error.message || 'Erro ao criar conta. Por favor, tente novamente.'),
         user: null 
       };
     } finally {
@@ -197,8 +146,7 @@ export const useProvideAuth = () => {
   const signOut = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -212,7 +160,7 @@ export const useProvideAuth = () => {
 
     try {
       setLoading(true);
-      const { error } = await supabase
+      await supabase
         .from('profiles')
         .update({
           name: data.name,
@@ -222,8 +170,6 @@ export const useProvideAuth = () => {
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id);
-
-      if (error) throw error;
 
       setUser(prev => prev ? { ...prev, ...data } : null);
     } catch (error) {
