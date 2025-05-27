@@ -124,6 +124,10 @@ export default function Dashboard() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <DashboardLayout>
       <div className="py-6">
