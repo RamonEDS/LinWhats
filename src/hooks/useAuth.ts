@@ -26,8 +26,21 @@ export const useProvideAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 3;
-  const TIMEOUT_DURATION = 30000; // Increased to 30 seconds
+  const MAX_RETRIES = 5; // Increased from 3 to 5
+  const INITIAL_RETRY_DELAY = 1000; // Start with 1 second
+  const MAX_RETRY_DELAY = 10000; // Max delay of 10 seconds
+  const TIMEOUT_DURATION = 60000; // Increased to 60 seconds
+
+  // Calculate exponential backoff with jitter
+  const getRetryDelay = (retryCount: number) => {
+    const baseDelay = Math.min(
+      MAX_RETRY_DELAY,
+      INITIAL_RETRY_DELAY * Math.pow(2, retryCount)
+    );
+    // Add random jitter of ±30%
+    const jitter = baseDelay * 0.3 * (Math.random() * 2 - 1);
+    return baseDelay + jitter;
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -37,7 +50,10 @@ export const useProvideAuth = () => {
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile fetch error:', error.message);
+        throw error;
+      }
       return profile;
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -53,7 +69,10 @@ export const useProvideAuth = () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Session fetch error:', error.message);
+          throw error;
+        }
 
         if (!mounted) return;
 
@@ -72,10 +91,12 @@ export const useProvideAuth = () => {
               createdAt: session.user.created_at,
             });
             setLoading(false);
+            setRetryCount(0); // Reset retry count on success
           } else if (mounted && retryCount < MAX_RETRIES) {
-            // Retry fetching profile if it fails
+            const delay = getRetryDelay(retryCount);
+            console.log(`Retrying profile fetch in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
             setRetryCount(prev => prev + 1);
-            setTimeout(getSession, 2000); // Retry after 2 seconds
+            setTimeout(getSession, delay);
           } else if (mounted) {
             console.error('Failed to fetch profile after maximum retries');
             setLoading(false);
@@ -90,8 +111,10 @@ export const useProvideAuth = () => {
       } catch (error) {
         console.error('Session error:', error);
         if (mounted && retryCount < MAX_RETRIES) {
+          const delay = getRetryDelay(retryCount);
+          console.log(`Retrying session fetch in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
           setRetryCount(prev => prev + 1);
-          setTimeout(getSession, 2000); // Retry after 2 seconds
+          setTimeout(getSession, delay);
         } else if (mounted) {
           setUser(null);
           setLoading(false);
