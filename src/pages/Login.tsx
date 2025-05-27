@@ -7,7 +7,7 @@ import Input from '../components/ui/Input';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { signIn, user, loading: authLoading } = useAuth();
+  const { signIn, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -33,22 +33,14 @@ export default function Login() {
         setError(signInError.message);
         return;
       }
+
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin">
-          <Lock className="h-8 w-8 text-primary-500" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

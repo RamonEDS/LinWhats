@@ -24,7 +24,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export const useProvideAuth = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -95,6 +95,7 @@ export const useProvideAuth = () => {
       } else if (mounted) {
         setUser(null);
       }
+      setLoading(false);
     });
 
     return () => {
@@ -105,6 +106,7 @@ export const useProvideAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -131,11 +133,14 @@ export const useProvideAuth = () => {
     } catch (error: any) {
       console.error('Login error:', error);
       return { error: new Error(error.message || 'Email ou senha incorretos') };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
+      setLoading(true);
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -189,16 +194,21 @@ export const useProvideAuth = () => {
         error: new Error('Erro ao criar conta. Por favor, tente novamente.'), 
         user: null 
       };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -206,6 +216,7 @@ export const useProvideAuth = () => {
     if (!user) return;
 
     try {
+      setLoading(true);
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -223,6 +234,8 @@ export const useProvideAuth = () => {
     } catch (error) {
       console.error('Profile update error:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
